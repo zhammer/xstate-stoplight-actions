@@ -1,28 +1,70 @@
-import React, { Component } from 'react';
-import logo from './logo.svg';
+import React, { useEffect, useState } from 'react';
 import './App.css';
+import useMachine from './useMachine';
+import { Machine } from 'xstate';
 
-class App extends Component {
-  render() {
+function App() {
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.tsx</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </header>
-      </div>
-    );
+        <div className='container'>
+            <StopLight />
+        </div>
+    )
+}
+
+const stopLightMachine = Machine({
+  id: 'stoplight',
+  initial: 'green',
+  states: {
+    green: {
+      onEntry: 'onTransitionedToGreen',
+      on: {
+          TIMER: 'yellow'
+      }
+    },
+    yellow: {
+      onEntry: 'onTransitionedToYellow',
+      on: {
+        TIMER: 'red'
+      }
+    },
+    red: {
+      onEntry: 'onTransitionedToRed',
+      on: {
+        TIMER: 'green'
+      }
+    }
   }
+})
+
+function StopLight() {
+    const [machine, send] = useMachine(stopLightMachine.withConfig({
+      actions: {
+        onTransitionedToGreen,
+        onTransitionedToYellow,
+        onTransitionedToRed
+      }
+    }));
+    useEffect(() => {
+      const interval = setInterval(() => send('TIMER'), 2e3)
+      return () => clearInterval(interval);
+    });
+    console.log('render. state is:', machine.value);
+    function onTransitionedToGreen() {
+      console.log('onTransitionedToGreen')
+    }
+    function onTransitionedToYellow() {
+      console.log('onTransitionedToYellow')
+    }
+    function onTransitionedToRed() {
+      console.log('onTransitionedToRed')
+    }
+    return (
+        <div>
+            <div style={{color: machine.value.toString()}} className='lighttext'>
+              {machine.value.toString()}
+            </div>
+        </div>
+    )
 }
 
 export default App;
